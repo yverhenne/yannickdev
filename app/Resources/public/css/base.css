@@ -10346,7 +10346,7 @@ ul.dropdown-menu.inner > li > a {
         clear: none;
     }
 
-    .grid-courses .col-md-4:nth-child(3n+1) {
+    .grid-courses .col-md-3:nth-child(4n+1) {
         clear: left;
     }
 
