@@ -10,9 +10,7 @@ $plugin = UserExtraTiles::create();
 $token = Security::get_token('uetile');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!Security::check_token('post', null, 'uetile')) {
-        api_not_allowed(true);
-    }
+  
     if (isset($_POST['add'])) {
         $plugin->createField($_POST['variable'], $_POST['display_text'], (int)$_POST['field_order']);
         Security::clear_token('uetile');
