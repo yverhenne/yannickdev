@@ -1,0 +1,22 @@
+<?php
+$strings['plugin_title'] = 'User profile';
+$strings['plugin_comment'] = 'Displays a user profile card with custom fields.';
+$strings['UserProfile'] = 'User profile';
+$strings['Fields'] = 'Fields';
+$strings['AddField'] = 'Add field';
+$strings['CurrentFields'] = 'Current fields';
+$strings['AddCategory'] = 'Add category';
+$strings['CurrentCategories'] = 'Current categories';
+$strings['Category'] = 'Category';
+$strings['Administrative'] = 'Administrative';
+$strings['HostCompany'] = 'Host company';
+$strings['Contract'] = 'Contract';
+$strings['Pedagogy'] = 'Pedagogy';
+$strings['administratif'] = 'Administrative';
+$strings['entreprise'] = 'Host company';
+$strings['contrat'] = 'Contract';
+$strings['pedagogie'] = 'Pedagogy';
+$strings['PlatformFields'] = 'Platform fields';
+$strings['SearchUser'] = 'Search user';
+$strings['SearchResults'] = 'Search results';
+$strings['IncludeTracking'] = 'Include in tracking';

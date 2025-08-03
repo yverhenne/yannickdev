@@ -6,6 +6,14 @@ use ChamiloSession as Session;
 
 $cidReset = true;
 require_once __DIR__.'/../inc/global.inc.php';
+$profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled');
+$pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
+$profilePlugin = null;
+if ($profilePluginEnabled && $pluginInstalled) {
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/config.php';
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/UserProfilePlugin.php';
+    $profilePlugin = UserProfilePlugin::create();
+}
 
 $this_section = SECTION_PLATFORM_ADMIN;
 
@@ -384,6 +392,9 @@ $returnParams = $extraField->addElements(
     false,
     true
 );
+if ($profilePluginEnabled && $pluginInstalled) {
+    $profilePlugin->addFieldsToForm($form, $user_data['user_id']);
+}
 $jqueryReadyContent = $returnParams['jquery_ready_content'];
 
 $allowEmailTemplate = api_get_configuration_value('mail_template_system');
@@ -558,6 +569,9 @@ if ($form->validate()) {
 
     $extraFieldValue = new ExtraFieldValue('user');
     $extraFieldValue->saveFieldValues($user);
+    if ($profilePluginEnabled && $pluginInstalled) {
+        $profilePlugin->saveUserValues($user_id, $user);
+    }
     $userInfo = api_get_user_info($user_id);
     $message = get_lang('UserUpdated').': '.Display::url(
         $userInfo['complete_name_with_username'],

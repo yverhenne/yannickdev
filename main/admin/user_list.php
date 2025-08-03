@@ -10,6 +10,14 @@ use ChamiloSession as Session;
  */
 $cidReset = true;
 require_once __DIR__.'/../inc/global.inc.php';
+$profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled');
+$pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
+$profilePlugin = null;
+if ($profilePluginEnabled && $pluginInstalled) {
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/config.php';
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/UserProfilePlugin.php';
+    $profilePlugin = UserProfilePlugin::create();
+}
 
 api_protect_session_admin_list_users();
 
@@ -599,6 +607,12 @@ function modify_filter($user_id, $url_params, $row)
         if (!$user_is_anonymous) {
             $result .= '<a href="user_information.php?user_id='.$user_id.'">'.
                         Display::return_icon('info2.png', get_lang('Info')).'</a>&nbsp;&nbsp;';
+            if ($profilePluginEnabled && $pluginInstalled) {
+                $result .= Display::url(
+                    Display::return_icon('profile.png', get_lang('UserProfile')),
+                    $profilePlugin->getViewUrl($user_id)
+                ).'&nbsp;';
+            }
         } else {
             $result .= Display::return_icon('info2_na.png', get_lang('Info')).'&nbsp;&nbsp;';
         }

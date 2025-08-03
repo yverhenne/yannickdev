@@ -1,0 +1,22 @@
+<?php
+$strings['plugin_title'] = 'Fiche utilisateur';
+$strings['plugin_comment'] = 'Affiche une fiche utilisateur avec des champs personnalisés.';
+$strings['UserProfile'] = 'Fiche utilisateur';
+$strings['Fields'] = 'Champs';
+$strings['AddField'] = 'Ajouter un champ';
+$strings['CurrentFields'] = 'Champs actuels';
+$strings['AddCategory'] = 'Ajouter une catégorie';
+$strings['CurrentCategories'] = 'Catégories actuelles';
+$strings['Category'] = 'Catégorie';
+$strings['Administrative'] = 'Administratif';
+$strings['HostCompany'] = "Entreprise d'accueil";
+$strings['Contract'] = 'Contrat';
+$strings['Pedagogy'] = 'Pédagogie';
+$strings['administratif'] = 'Administratif';
+$strings['entreprise'] = "Entreprise d'accueil";
+$strings['contrat'] = 'Contrat';
+$strings['pedagogie'] = 'Pédagogie';
+$strings['PlatformFields'] = 'Champs de la plateforme';
+$strings['SearchUser'] = 'Rechercher un utilisateur';
+$strings['SearchResults'] = 'Résultats de la recherche';
+$strings['IncludeTracking'] = 'Inclure dans le suivi';

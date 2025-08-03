@@ -10,6 +10,12 @@ $cidReset = true;
 
 // Including some necessary chamilo files.
 require_once __DIR__.'/../inc/global.inc.php';
+$profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled');
+$pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
+if ($profilePluginEnabled && $pluginInstalled) {
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/config.php';
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/UserProfilePlugin.php';
+}
 
 // Setting the section (for the tabs).
 $this_section = SECTION_PLATFORM_ADMIN;
@@ -142,6 +148,13 @@ if (api_is_platform_admin()) {
         'url' => 'extra_fields.php?type=user',
         'label' => get_lang('ManageUserFields'),
     ];
+    if ($profilePluginEnabled && $pluginInstalled) {
+        $items[] = [
+            'class' => 'item-user-profile-plugin',
+            'url' => '../plugin/user_profile/admin.php',
+            'label' => get_plugin_lang('UserProfile', 'UserProfilePlugin'),
+        ];
+    }
     $items[] = [
         'class' => 'item-user-groups',
         'url' => 'usergroups.php',
