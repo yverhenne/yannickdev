@@ -9010,6 +9010,7 @@ $AdminID = "ID de l'admin";
 $MoodleVersion = "Version de Moodle";
 $CreateExport = "Créer un export";
 $MoodleExportAdminIDComment = "Moodle requiert une identification de l'utilisateur pour la stocker au sein de fichiers XML qui font partie du format .mbz.
+
 Merci de bien vouloir fournir un numéro interne (nombre entier) de l'utilisateur qui exporte le cours, ou d'un utilisateur de notre système, qui sera désigné (s'il y a correspondance) comme le propriétaire des ressources importées sur l'autre système. Si vous avez encore des doutes, indiquez simplement '1' et donnez des données fictives.";
 $DropboxVulnerabilityWarning = "Ne téléchargez que des fichiers envoyés par des personnes en qui vous avez confiance. Dans le doute, merci d'utiliser un programme anti-virus sur votre ordinateur pour réduire les risques pour vos données.";
 $SessionExpiredAt = "Session expirée à";
@@ -9046,4 +9047,10 @@ $AnswerInOfficeDoc = "Réponse comme document bureautique";
 $UploadOfficeDoc = "Envoyer un document bureautique";
 $AllowedFormats = "Formats supportés";
 $TheoreticalTime = "Temps théorique";
+$ShowTracking= 'Inclure dans le suivi';
+$EditFields = 'Modifier les champs';
+$UserTracking= 'Suivi utilisateur';
+$AverageProgress= 'Progression moyenne';
+$TimeSpentLastWeek= 'Temps passé la semaine précédente';
+$Completed= 'Réalisé';
 ?>
