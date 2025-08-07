@@ -5,6 +5,14 @@
 $cidReset = true;
 // Including necessary libraries.
 require_once __DIR__.'/../inc/global.inc.php';
+$profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled');
+$pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
+$profilePlugin = null;
+if ($profilePluginEnabled && $pluginInstalled) {
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/config.php';
+    require_once api_get_path(SYS_PLUGIN_PATH).'user_profile/UserProfilePlugin.php';
+    $profilePlugin = UserProfilePlugin::create();
+}
 
 // Section for the tabs
 $this_section = SECTION_PLATFORM_ADMIN;
@@ -320,6 +328,11 @@ $returnParams = $extraField->addElements(
     false,
     true
 );
+$profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled');
+$pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
+if ($profilePluginEnabled && $pluginInstalled) {
+    $profilePlugin->addFieldsToForm($form);
+}
 
 $allowEmailTemplate = api_get_configuration_value('mail_template_system');
 if ($allowEmailTemplate) {
@@ -483,6 +496,9 @@ if ($form->validate()) {
             $extraFieldValues = new ExtraFieldValue('user');
             $user['item_id'] = $user_id;
             $extraFieldValues->saveFieldValues($user);
+            if ($profilePluginEnabled && $pluginInstalled) {
+                $profilePlugin->saveUserValues($user_id, $user);
+            }
             $message = get_lang('UserAdded').': '.
                 Display::url(
                     api_get_person_name($firstname, $lastname),
