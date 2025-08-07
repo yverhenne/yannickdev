@@ -123,7 +123,43 @@ if ($formValidator->validate()) {
             $fileName = get_lang('Export').'-'.$reportTypeValues[$reportType].'_'.api_get_local_time();
             if ($format === 'pdf') {
                 $html = Export::convert_array_to_html($rows);
-                Export::export_html_to_pdf($html, ['filename' => $fileName]);
+
+                $fileName = api_replace_dangerous_char($fileName);
+
+                // Directory that stores the reports
+                $reportsDir = api_get_path(SYS_UPLOAD_PATH).'reports/';
+                if (!is_dir($reportsDir)) {
+                    api_create_protected_dir('reports', api_get_path(SYS_UPLOAD_PATH));
+                }
+
+                $qrFile = api_get_path(SYS_ARCHIVE_PATH).$fileName.'_qr.png';
+                $publicLink = api_get_path(WEB_UPLOAD_PATH).'reports/'.$fileName.'.pdf';
+
+                $certificate = new Certificate();
+                $certificate->generateQRImage($publicLink, $qrFile);
+
+                $html .= '<div style="text-align:center;margin-top:20px">'
+                    .'((certificate_link))<br />'
+                    .'((certificate_barcode))'
+                    .'</div>';
+
+                $html = str_replace(
+                    '((certificate_link))',
+                    '<a href="'.$publicLink.'">'.$publicLink.'</a>',
+                    $html
+                );
+                if (is_file($qrFile)) {
+                    $html = str_replace(
+                        '((certificate_barcode))',
+                        '<img src="'.api_get_path(WEB_ARCHIVE_PATH).basename($qrFile).'" />',
+                        $html
+                    );
+                }
+
+                $pdf = new PDF();
+                $pdfPath = $pdf->exportFromHtmlToFile($html, $fileName, $reportsDir);
+                DocumentManager::file_send_for_download($pdfPath, true, $fileName.'.pdf');
+                exit;
             } else {
                 Export::arrayToCsv($rows, $fileName);
             }
