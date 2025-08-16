@@ -1366,6 +1366,11 @@ if (api_get_configuration_value('improve_tracking_in_mystudent_php')) {
     echo Display::panel($sessionProgressHtml, '', '', 'default', $sessionProgressHeading);
 }
 
+$profileBlock = MyStudents::getBlockForUserProfile($student_id);
+if (!empty($profileBlock)) {
+    echo $profileBlock;
+    echo '<br /><br />';
+}
 echo MyStudents::getBlockForSkills(
     $student_id,
     $courseInfo ? $courseInfo['real_id'] : 0,

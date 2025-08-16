@@ -6,10 +6,10 @@ if (!api_get_configuration_value('plugin_user_profile_enabled')) {
 require_once __DIR__.'/UserProfilePlugin.php';
 require_once api_get_path(LIBRARY_PATH).'sessionmanager.lib.php';
 require_once api_get_path(LIBRARY_PATH).'tracking.lib.php';
-require_once api_get_path(LIBRARY_PATH).'MyStudents.php';
 
 global $htmlHeadXtra;
-$token = Security::get_token();
+$ajaxUrl = api_get_path(WEB_PLUGIN_PATH).'user_profile/ajax.php';
+$token   = Security::get_token();
 $htmlHeadXtra[] = '<style>
     .user-profile.card {border:1px solid #eee;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,0.05);margin-bottom:20px;}
     .user-profile .card-title {font-weight:bold;text-align:center;background:#f7f7f7;margin:0;padding:10px;}
@@ -24,54 +24,25 @@ $htmlHeadXtra[] = '<style>
 $htmlHeadXtra[] = '<script>
 var userProfileToken = "'.$token.'";
 $(function(){
-    $(document).on("click", ".agenda-remind-btn", function(e){
-        e.preventDefault();
-        var $card = $(this).closest(".user-profile");
-        var userId = $card.data("user-id");
-        $.post("'.api_get_path(WEB_PLUGIN_PATH).'user_profile/ajax.php", {
-            action: "remind_agenda",
-            user_id: userId,
-            sec_token: userProfileToken
-        }, function(resp){
-            if (resp && resp.token) {
-                userProfileToken = resp.token;
-            }
-            if (resp && resp.status === \'ok\') {
-                alert("Message envoyé");
-            } else {
-                alert("Erreur lors de l\'envoi du message");
-            }
-        }, "json");
-    });
-
-    $(document).on("click", ".warn-btn", function(e){
-        e.preventDefault();
-        var $card = $(this).closest(".user-profile");
-        var userId = $card.data("user-id");
-        var teacherId = $card.find(".teacher-select").val();
-        if(!teacherId){
-            alert("Veuillez sélectionner un formateur");
-            return;
-        }
-        $.post("'.api_get_path(WEB_PLUGIN_PATH).'user_profile/ajax.php", {
-            action: "warn",
-            user_id: userId,
-            teacher_id: teacherId,
-            sec_token: userProfileToken
-        }, function(resp){
-            if (resp && resp.token) {
-                userProfileToken = resp.token;
-            }
-            if (resp && resp.status === \'ok\') {
-                alert("Message envoyé");
-            } else {
-                alert("Erreur lors de l\'envoi du message");
-            }
-        }, "json");
-    });
-
     $(document).on("change", ".per-page-select", function(){
         $("#per-page-form").submit();
+    });
+    $(document).on("change", ".untracked-checkbox", function(){
+        var $cb = $(this);
+        var userId = $cb.closest(".card.user-profile").data("user-id");
+        var fieldId = $cb.data("field-id");
+        var checked = $cb.is(":checked") ? 1 : 0;
+        var $status = $cb.closest("td").find(".save-status");
+        $.post("'.$ajaxUrl.'", {action: "toggle", user_id: userId, field_id: fieldId, checked: checked, sec_token: userProfileToken}, function(resp){
+            if (resp) {
+                if (resp.token) {
+                    userProfileToken = resp.token;
+                }
+                if (resp.status === "ok") {
+                    $status.text("ok").show().delay(2000).fadeOut();
+                }
+            }
+        }, "json");
     });
 });
 </script>';
@@ -133,13 +104,10 @@ if ($perPage !== 'all') {
     $userSql .= " ORDER BY lastname, firstname";
 }
 $users = Database::query($userSql);
-// Preload teachers for selection list
-$teachersRes = Database::query("SELECT id, firstname, lastname FROM $tblUser WHERE status = ".COURSEMANAGER." ORDER BY lastname, firstname");
-$teachers = Database::store_result($teachersRes);
 
 Display::display_header(get_lang('UserTracking', 'user_profile'));
 
-// Navigation links to switch between pedagogical and administrative tracking
+// Navigation links between pedagogical and administrative tracking
 $current = basename($_SERVER['SCRIPT_NAME']);
 $links = [];
 if ($current === 'tracking.php') {
@@ -222,11 +190,8 @@ while ($user = Database::fetch_array($users)) {
         $lastLogin = Security::remove_XSS($lastLoginFormatted);
     }
 
-    [$thisWeekBox, $nextWeekBox] = MyStudents::getAgendaStatusBoxes($userId);
-
     echo '<li class="list-group-item"><strong>'.get_lang('RegistrationDate').':</strong> '.Security::remove_XSS($registrationDate).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('LastLogins').':</strong> '.$lastLogin.'</li>';
-    echo '<li class="list-group-item"><strong>'.get_lang('Agenda').':</strong> '.$thisWeekBox.' | '.$nextWeekBox.' <button class="btn btn-warning ml-2 agenda-remind-btn">Relancer</button></li>';
     echo '</ul>';
 
     // Time spent last week
@@ -274,7 +239,7 @@ while ($user = Database::fetch_array($users)) {
 
     echo '</div>'; // row
 
-    // Tracked custom fields by category
+    // Untracked custom fields by category
     $tblField = Database::get_main_table(UserProfilePlugin::TABLE_FIELD);
     $tblValue = Database::get_main_table(UserProfilePlugin::TABLE_VALUE);
     $tblCat = Database::get_main_table(UserProfilePlugin::TABLE_CATEGORY);
@@ -282,7 +247,7 @@ while ($user = Database::fetch_array($users)) {
             FROM $tblField f
             LEFT JOIN $tblValue v ON (f.id = v.field_id AND v.user_id = $userId)
             LEFT JOIN $tblCat c ON (f.category_id = c.id)
-            WHERE f.access_url_id = $urlId AND c.access_url_id = $urlId AND f.include_tracking = 1
+            WHERE f.access_url_id = $urlId AND c.access_url_id = $urlId AND f.include_tracking = 0
             ORDER BY c.cat_order, f.field_order, f.id";
     $res = Database::query($sql);
     $fields = Database::store_result($res);
@@ -317,31 +282,16 @@ while ($user = Database::fetch_array($users)) {
                     echo ' : '.$val;
                 }
                 echo '</td>';
-                echo '<td class="text-right"><input type="checkbox" disabled'.$checkedAttr.'></td>';
+                echo '<td class="text-right"><input type="checkbox" class="untracked-checkbox" data-field-id="'.$field['id'].'"'.$checkedAttr.'> <span class="save-status text-success" style="display:none;"></span></td>';
                 echo '</tr>';
             }
             echo '</tbody></table></div>';
             echo '</div>';
         }
     }
-    // Selection list of teachers
-    if (!empty($teachers)) {
-        echo '<div class="mt-3">';
-        echo '<label>'.get_lang('Teacher').'</label>';
-        echo '<select class="form-control teacher-select">';
-        // Default empty option so no teacher is pre-selected
-        echo '<option value=""></option>';
-        foreach ($teachers as $teacher) {
-            $fullName = $teacher['firstname'].' '.$teacher['lastname'];
-            echo '<option value="'.((int) $teacher['id']).'">'.Security::remove_XSS($fullName).'</option>';
-        }
-        echo '</select>';
-        echo '</div>';
-    }
     echo '<div class="text-center mt-3">';
     echo '<a class="btn btn-danger" title="Accéder au suivi" href="'.Security::remove_XSS($detailsUrl).'">Suivi</a>';
     echo '<a class="btn btn-primary ml-2" href="'.Security::remove_XSS($profileUrl).'">'.get_lang('UserProfile').'</a>';
-    echo '<button class="btn btn-success ml-2 warn-btn" title="Alerter l\'enseignant des échéances en retard">Avertir</button>';
     echo '</div>';
     echo '</div>'; // card-body
     echo '</div></div>';
