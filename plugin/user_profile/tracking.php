@@ -86,7 +86,7 @@ if (strlen($search) >= 3) {
 }
 
 // Fetch users to display (all or search-filtered)
-$userSql = "SELECT id, firstname, lastname, email, official_code, phone, registration_date, last_login FROM $tblUser";
+$userSql = "SELECT id, firstname, lastname, email, phone, registration_date, last_login FROM $tblUser";
 $where = '';
 if (!empty($searchResults)) {
     $ids = array_map('intval', array_column($searchResults, 'id'));
@@ -155,6 +155,20 @@ $end->modify('+6 days')->setTime(23, 59, 59);
 $startUtc = api_get_utc_datetime($start->format('Y-m-d H:i:s'));
 $endUtc = api_get_utc_datetime($end->format('Y-m-d H:i:s'));
 
+// Calculate current and next week ranges in UTC
+$weekStart = new DateTime('monday this week', new DateTimeZone('UTC'));
+$weekStart->setTime(0, 0, 0);
+$weekEnd = clone $weekStart;
+$weekEnd->modify('+6 days')->setTime(23, 59, 59);
+$nextWeekStart = clone $weekStart;
+$nextWeekStart->modify('+7 days');
+$nextWeekEnd = clone $weekEnd;
+$nextWeekEnd->modify('+7 days');
+$weekStartUtc = api_get_utc_datetime($weekStart->format('Y-m-d H:i:s'));
+$weekEndUtc = api_get_utc_datetime($weekEnd->format('Y-m-d H:i:s'));
+$nextWeekStartUtc = api_get_utc_datetime($nextWeekStart->format('Y-m-d H:i:s'));
+$nextWeekEndUtc = api_get_utc_datetime($nextWeekEnd->format('Y-m-d H:i:s'));
+
 while ($user = Database::fetch_array($users)) {
     $userId = (int) $user['id'];
     echo '<div class="col-md-6">';
@@ -165,7 +179,6 @@ while ($user = Database::fetch_array($users)) {
     echo '<div class="col-sm-8">';
     echo '<ul class="list-group list-group-flush">';
     echo '<li class="list-group-item"><strong>'.get_lang('Email').':</strong> '.Security::remove_XSS($user['email']).'</li>';
-    echo '<li class="list-group-item"><strong>'.get_lang('OfficialCode').':</strong> '.Security::remove_XSS($user['official_code']).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('Phone').':</strong> '.Security::remove_XSS($user['phone']).'</li>';
     $registrationDate = (!empty($user['registration_date']) && $user['registration_date'] !== '0000-00-00 00:00:00')
         ? api_format_date($user['registration_date'], $dateDisplayFormat)
@@ -173,8 +186,28 @@ while ($user = Database::fetch_array($users)) {
     $lastLogin = (!empty($user['last_login']) && $user['last_login'] !== '0000-00-00 00:00:00')
         ? api_format_date($user['last_login'], $dateDisplayFormat)
         : '';
+
+    $tblCourseUser = Database::get_main_table(TABLE_MAIN_COURSE_USER);
+    $tblAgenda = Database::get_course_table(TABLE_AGENDA);
+    $courseRes = Database::query("SELECT DISTINCT c_id FROM $tblCourseUser WHERE user_id = $userId");
+    $courseIds = Database::store_result($courseRes);
+    $hasThisWeek = false;
+    $hasNextWeek = false;
+    if (!empty($courseIds)) {
+        $ids = implode(',', array_map('intval', array_column($courseIds, 'c_id')));
+        $sqlWeek = "SELECT 1 FROM $tblAgenda WHERE c_id IN ($ids) AND start_date >= '$weekStartUtc' AND start_date <= '$weekEndUtc' LIMIT 1";
+        $weekRes = Database::query($sqlWeek);
+        $hasThisWeek = Database::num_rows($weekRes) > 0;
+        $sqlNext = "SELECT 1 FROM $tblAgenda WHERE c_id IN ($ids) AND start_date >= '$nextWeekStartUtc' AND start_date <= '$nextWeekEndUtc' LIMIT 1";
+        $nextRes = Database::query($sqlNext);
+        $hasNextWeek = Database::num_rows($nextRes) > 0;
+    }
+    $thisWeekBox = '<span style="display:inline-block;width:12px;height:12px;background:'.($hasThisWeek ? '#28a745' : '#dc3545').'"></span>';
+    $nextWeekBox = '<span style="display:inline-block;width:12px;height:12px;background:'.($hasNextWeek ? '#28a745' : '#dc3545').'"></span>';
+
     echo '<li class="list-group-item"><strong>'.get_lang('RegistrationDate').':</strong> '.Security::remove_XSS($registrationDate).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('LastLogins').':</strong> '.Security::remove_XSS($lastLogin).'</li>';
+    echo '<li class="list-group-item"><strong>'.get_lang('Agenda').':</strong> '.$thisWeekBox.' | '.$nextWeekBox.'</li>';
     echo '</ul>';
 
     // Time spent last week
