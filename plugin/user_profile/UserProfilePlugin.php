@@ -192,7 +192,9 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
                     $form->addText($name, $field['name'], false);
                 }
                 if (isset($values[$field['id']])) {
-                    $form->setDefaults([$name => $values[$field['id']]]);
+                    $form->setDefaults([
+                        $name => $values[$field['id']]['value'],
+                    ]);
                 }
             }
         }
@@ -216,7 +218,7 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
                     'user_id' => $userId,
                     'field_id' => $field['id'],
                     'value' => $value,
-                    'include_tracking' => 0,
+                    'checked' => 0,
                 ]);
             }
         }
@@ -230,7 +232,10 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
         ]);
         $values = [];
         foreach ($rows as $row) {
-            $values[$row['field_id']] = $row['value'];
+            $values[$row['field_id']] = [
+                'value' => $row['value'],
+                'checked' => (int) $row['checked'],
+            ];
         }
 
         return $values;
