@@ -6,6 +6,7 @@ if (!api_get_configuration_value('plugin_user_profile_enabled')) {
     api_not_allowed(true);
 }
 require_once __DIR__.'/UserProfilePlugin.php';
+require_once api_get_path(LIBRARY_PATH).'MyStudents.php';
 
 $userId = (int) ($_GET['id'] ?? api_get_user_id());
 $info = api_get_user_info($userId);
@@ -47,33 +48,25 @@ ob_start();
         <li class="list-group-item"><strong><?php echo get_lang('LastLogins'); ?>:</strong> <?php echo Security::remove_XSS($info['last_login']); ?></li>
     </ul>
 </div>
-<table width="100%">
-<?php $i = 0; foreach ($categories as $cat): ?>
-    <?php if ($i % 2 === 0): ?><tr><?php endif; ?>
-    <td width="50%" valign="top">
-        <div class="card user-profile mb-3">
-            <div class="card-title"><strong><?php echo Security::remove_XSS(UserProfilePlugin::getCategoryLabel($cat)); ?></strong></div>
-            <?php if (!empty($fieldsByCat[$cat['id']])): ?>
-            <ul class="list-group list-group-flush">
-                <?php foreach ($fieldsByCat[$cat['id']] as $field): ?>
-                <?php
-                $val = $field['value'];
-                if ($field['field_type'] === 'date' && !empty($val)) {
-                    $val = api_format_date($val, DATE_FORMAT_LONG);
-                }
-                ?>
-                <li class="list-group-item"><strong><?php echo Security::remove_XSS($field['name']); ?>:</strong> <?php echo Security::remove_XSS($val); ?></li>
-                <?php endforeach; ?>
-            </ul>
-            <?php endif; ?>
-        </div>
-    </td>
-    <?php if ($i % 2 === 1): ?></tr><?php endif; ?>
-<?php $i++; endforeach; ?>
-<?php if ($i % 2 === 1): ?><td width="50%"></td></tr><?php endif; ?>
-</table>
-        
+<?php foreach ($categories as $cat): ?>
+<div class="card user-profile mb-3">
+    <div class="card-title category-title"><strong><?php echo Security::remove_XSS(UserProfilePlugin::getCategoryLabel($cat)); ?></strong></div>
+    <?php if (!empty($fieldsByCat[$cat['id']])): ?>
+    <ul class="list-group list-group-flush">
+        <?php foreach ($fieldsByCat[$cat['id']] as $field): ?>
+        <?php
+        $val = $field['value'];
+        if ($field['field_type'] === 'date' && !empty($val)) {
+            $val = api_format_date($val, DATE_FORMAT_LONG);
+        }
+        ?>
+        <li class="list-group-item"><strong><?php echo Security::remove_XSS($field['name']); ?>:</strong> <?php echo Security::remove_XSS($val); ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <?php endif; ?>
 </div>
+<?php endforeach; ?>
+<?php echo MyStudents::getBlockForSynthesis($userId, true); ?>
 <?php
 $html = ob_get_clean();
 

@@ -1,12 +1,15 @@
 <?php
 require_once __DIR__.'/config.php';
 require_once __DIR__.'/UserProfilePlugin.php';
+require_once api_get_path(LIBRARY_PATH).'MyStudents.php';
 
 if (!api_get_configuration_value('plugin_user_profile_enabled')) {
     api_not_allowed(true);
 }
 
 global $htmlHeadXtra;
+$htmlHeadXtra[] = '<script src="'.api_get_path(WEB_PUBLIC_PATH)
+    .'assets/jquery.easy-pie-chart/dist/jquery.easypiechart.js"></script>';
 $htmlHeadXtra[] = '<style>
     .user-profile.card {
         border: 1px solid #eee;
@@ -18,9 +21,12 @@ $htmlHeadXtra[] = '<style>
     .user-profile .card-title {
         font-weight: bold;
         text-align: center;
-        background: #f7f7f7;
+        background: #E1F0F5;
         margin: 0;
         padding: 10px;
+    }
+    .user-profile .card-title.category-title {
+        background: #E1F0F5;
     }
     .list-group-item {
     border: 0px solid #ddd;
@@ -51,20 +57,18 @@ $fieldsByCat = [];
 Display::display_header(get_lang('UserProfile'));
 
 $pdfUrl = api_get_path(WEB_PLUGIN_PATH).'user_profile/pdf.php?id='.$userId;
-$pdfLink = Display::url(
-    Display::return_icon('icons\32\export_pdf.png', get_lang('ExportToPdf')),
-    $pdfUrl
-);
-$backLink = '';
-if (!empty($_GET['from_search'])) {
-    $backLink = Display::url(
-        Display::return_icon('back.png', get_lang('Back')),
-        UserProfilePlugin::create()->getAdminUrl(),
-        ['class' => 'mr-2']
-    );
-}
-echo '<div class="d-flex justify-content-between align-items-center">';
-echo '<div>'.$backLink.$pdfLink.'</div>';
+$xlsUrl = api_get_path(WEB_PLUGIN_PATH).'user_profile/xls.php?id='.$userId;
+$pdfLink = '<a href="'.$pdfUrl.'" class="mr-2">'
+    .Display::return_icon('icons\\32\\export_pdf.png', get_lang('ExportToPdf')).'</a>';
+$xlsLink = '<a href="'.$xlsUrl.'">'
+    .Display::return_icon('icons\\32\\export_excel.png', get_lang('ExportAsXLS')).'</a>';
+$backLink = '<a href="javascript:history.back();" class="mr-2">'
+    .Display::return_icon('back.png', get_lang('Back')).'</a>';
+$editUrl = api_get_path(WEB_CODE_PATH).'admin/user_edit.php?user_id='.$userId;
+$editLink = '<a href="'.$editUrl.'" class="mr-2">'
+    .Display::return_icon('icons\\32\\edit.png', get_lang('Edit')).'</a>';
+echo '<div class="mb-2">';
+echo $backLink.$editLink.$pdfLink.$xlsLink;
 echo '</div>';
 
 // Built-in fields
@@ -89,13 +93,11 @@ foreach ($fields as $field) {
     $fieldsByCat[$field['category_id']][] = $field;
 }
 $categories = UserProfilePlugin::create()->getCategories();
-echo '<div class="row">';
 foreach ($categories as $cat) {
     $catId = $cat['id'];
     $label = UserProfilePlugin::getCategoryLabel($cat);
-    echo '<div class="col-md-6">';
     echo '<div class="card user-profile mb-3">';
-    echo '<div class="card-title"><strong>'.$label.'</strong></div>';
+    echo '<div class="card-title category-title"><strong>'.$label.'</strong></div>';
     if (!empty($fieldsByCat[$catId])) {
         echo '<ul class="list-group list-group-flush">';
         foreach ($fieldsByCat[$catId] as $field) {
@@ -107,9 +109,10 @@ foreach ($categories as $cat) {
         }
         echo '</ul>';
     }
-    echo '</div></div>';
+    echo '</div>';
 }
-echo '</div>';
+
+echo MyStudents::getBlockForSynthesis($userId);
 
 Display::display_footer();
 ?>
