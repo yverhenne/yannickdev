@@ -70,6 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 MessageManager::send_message_simple($teacherId, $subject, $content);
             }
             $status = 'ok';
+        } elseif ($_POST['action'] === 'remind_agenda') {
+            $userId = (int) ($_POST['user_id'] ?? 0);
+            if ($userId) {
+                $subject = 'Relance agenda';
+                $content = "Bonjour, vous n'avez pas déclaré vos horaires de formation dans l'agenda. Merci de faire le nécessaire au plus vite. Cordialement";
+                $senderId = api_get_user_id();
+                MessageManager::send_message_simple($userId, $subject, $content, $senderId);
+            }
+            $status = 'ok';
         }
     }
     Security::clear_token();

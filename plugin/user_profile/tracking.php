@@ -49,6 +49,26 @@ $(function(){
         }, "json");
     });
 
+    $(document).on("click", ".agenda-remind-btn", function(e){
+        e.preventDefault();
+        var $card = $(this).closest(".user-profile");
+        var userId = $card.data("user-id");
+        $.post("'.api_get_path(WEB_PLUGIN_PATH).'user_profile/ajax.php", {
+            action: "remind_agenda",
+            user_id: userId,
+            sec_token: userProfileToken
+        }, function(resp){
+            if (resp && resp.token) {
+                userProfileToken = resp.token;
+            }
+            if (resp && resp.status === \'ok\') {
+                alert("Message envoyé");
+            } else {
+                alert("Erreur lors de l\'envoi du message");
+            }
+        }, "json");
+    });
+
     $(document).on("change", ".per-page-select", function(){
         $("#per-page-form").submit();
     });
@@ -207,7 +227,7 @@ while ($user = Database::fetch_array($users)) {
 
     echo '<li class="list-group-item"><strong>'.get_lang('RegistrationDate').':</strong> '.Security::remove_XSS($registrationDate).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('LastLogins').':</strong> '.Security::remove_XSS($lastLogin).'</li>';
-    echo '<li class="list-group-item"><strong>'.get_lang('Agenda').':</strong> '.$thisWeekBox.' | '.$nextWeekBox.'</li>';
+    echo '<li class="list-group-item"><strong>'.get_lang('Agenda').':</strong> '.$thisWeekBox.' | '.$nextWeekBox.' <button class="btn btn-warning btn-sm ml-2 agenda-remind-btn">Relancer</button></li>';
     echo '</ul>';
 
     // Time spent last week
