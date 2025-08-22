@@ -1791,6 +1791,7 @@ if (empty($details)) {
                 if($theoreticalTimeEnabled) {
                     echo '<td>'.$theoreticalTimeDisplay.'</td>';
                 }
+
                 if ($subscriptionColumnEnabled && !empty($sId)) {
                     echo '<td>'.$subscriptionIcon.'</td>';
                 }
@@ -1802,6 +1803,7 @@ if (empty($details)) {
                         .'&id_session='.$sId.'#infosStudent">'
                         .Display::return_icon('2rightarrow.png', get_lang('Details'), ['class' => 'details-icon'])
                         .'</a></td>';
+
                 } else {
                     echo '<td width="10"><a href="'.api_get_self().'?student='.$student_id
                         .'&details=true&course='.$courseInfoItem['code'].'&origin='.$origin.'&id_session='.$sId
