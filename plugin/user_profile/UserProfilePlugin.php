@@ -7,7 +7,9 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
     public const TABLE_FIELD = 'plugin_user_profile_field';
     public const TABLE_VALUE = 'plugin_user_profile_value';
     public const TABLE_CATEGORY = 'plugin_user_profile_category';
+    public const TABLE_COMMENT = 'plugin_user_profile_comment';
     public const TABLE_TEACHERS = 'plugin_user_profile_teachers';
+
 
     public function get_name(): string
     {
@@ -44,6 +46,7 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
         $tblField = Database::get_main_table(self::TABLE_FIELD);
         $tblValue = Database::get_main_table(self::TABLE_VALUE);
         $tblCat = Database::get_main_table(self::TABLE_CATEGORY);
+        $tblComment = Database::get_main_table(self::TABLE_COMMENT);
         $tblTeachers = Database::get_main_table(self::TABLE_TEACHERS);
         $urlId = api_get_current_access_url_id();
 
@@ -89,6 +92,24 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
             Database::query("ALTER TABLE $tblValue ADD checked TINYINT(1) NOT NULL DEFAULT 0");
         }
 
+        $sql = "CREATE TABLE IF NOT EXISTS $tblComment (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            author_id INT NOT NULL,
+            user_id INT NOT NULL,
+            comment_date DATETIME NOT NULL,
+            content TEXT NOT NULL,
+            is_public TINYINT(1) NOT NULL DEFAULT 0,
+            INDEX (author_id),
+            INDEX (user_id)
+        )";
+        Database::query($sql);
+
+        $this->installHook();
+    }
+
+    public function uninstall()
+    {
+        $tables = [self::TABLE_FIELD, self::TABLE_VALUE, self::TABLE_CATEGORY, self::TABLE_COMMENT];
         $sql = "CREATE TABLE IF NOT EXISTS $tblTeachers (
             user_id INT NOT NULL PRIMARY KEY,
             teacher_ids TEXT
