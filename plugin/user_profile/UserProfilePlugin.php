@@ -8,6 +8,8 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
     public const TABLE_VALUE = 'plugin_user_profile_value';
     public const TABLE_CATEGORY = 'plugin_user_profile_category';
     public const TABLE_COMMENT = 'plugin_user_profile_comment';
+    public const TABLE_TEACHERS = 'plugin_user_profile_teachers';
+
 
     public function get_name(): string
     {
@@ -45,6 +47,7 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
         $tblValue = Database::get_main_table(self::TABLE_VALUE);
         $tblCat = Database::get_main_table(self::TABLE_CATEGORY);
         $tblComment = Database::get_main_table(self::TABLE_COMMENT);
+        $tblTeachers = Database::get_main_table(self::TABLE_TEACHERS);
         $urlId = api_get_current_access_url_id();
 
         $sql = "CREATE TABLE IF NOT EXISTS $tblCat (
@@ -107,6 +110,18 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
     public function uninstall()
     {
         $tables = [self::TABLE_FIELD, self::TABLE_VALUE, self::TABLE_CATEGORY, self::TABLE_COMMENT];
+        $sql = "CREATE TABLE IF NOT EXISTS $tblTeachers (
+            user_id INT NOT NULL PRIMARY KEY,
+            teacher_ids TEXT
+        )";
+        Database::query($sql);
+
+        $this->installHook();
+    }
+
+    public function uninstall()
+    {
+        $tables = [self::TABLE_FIELD, self::TABLE_VALUE, self::TABLE_CATEGORY, self::TABLE_TEACHERS];
         foreach ($tables as $table) {
             $tableName = Database::get_main_table($table);
             $sql = "DROP TABLE IF EXISTS $tableName";
@@ -153,6 +168,11 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
     public function getTrackingUrl(): string
     {
         return api_get_path(WEB_PLUGIN_PATH).$this->get_name().'/tracking.php';
+    }
+
+    public function getTeacherManagementUrl(): string
+    {
+        return api_get_path(WEB_PLUGIN_PATH).$this->get_name().'/teachers.php';
     }
 
     public function getCategories(): array
@@ -253,6 +273,57 @@ class UserProfilePlugin extends Plugin implements HookPluginInterface
         }
 
         return $values;
+    }
+
+    public function getTeacherOptions(): array
+    {
+        $tblUser = Database::get_main_table(TABLE_MAIN_USER);
+        $res = Database::query("SELECT id, firstname, lastname FROM $tblUser WHERE status = ".COURSEMANAGER." ORDER BY lastname, firstname");
+        $options = [];
+        while ($row = Database::fetch_array($res)) {
+            $options[$row['id']] = $row['firstname'].' '.$row['lastname'];
+        }
+        return $options;
+    }
+
+    public function saveUserTeachers(int $userId, array $teacherIds): void
+    {
+        $table = Database::get_main_table(self::TABLE_TEACHERS);
+        $teacherIds = array_unique(array_filter(array_map('intval', $teacherIds)));
+        $data = ['teacher_ids' => implode(',', $teacherIds)];
+        $exists = Database::select('user_id', $table, ['where' => ['user_id = ?' => $userId]], 'first');
+        if ($exists) {
+            Database::update($table, $data, ['user_id = ?' => $userId]);
+        } else {
+            $data['user_id'] = $userId;
+            Database::insert($table, $data);
+        }
+    }
+
+    public function getUserTeachers(int $userId): array
+    {
+        $table = Database::get_main_table(self::TABLE_TEACHERS);
+        $row = Database::select('teacher_ids', $table, ['where' => ['user_id = ?' => $userId]], 'first');
+        if (!$row || empty($row['teacher_ids'])) {
+            return [];
+        }
+        return array_filter(array_map('intval', explode(',', $row['teacher_ids'])));
+    }
+
+    public function getTeacherNamesForUser(int $userId): string
+    {
+        $ids = $this->getUserTeachers($userId);
+        if (empty($ids)) {
+            return '';
+        }
+        $tblUser = Database::get_main_table(TABLE_MAIN_USER);
+        $idList = implode(',', array_map('intval', $ids));
+        $res = Database::query("SELECT firstname, lastname FROM $tblUser WHERE id IN ($idList) ORDER BY lastname, firstname");
+        $names = [];
+        while ($row = Database::fetch_array($res)) {
+            $names[] = $row['firstname'].' '.$row['lastname'];
+        }
+        return implode(', ', $names);
     }
 }
 ?>

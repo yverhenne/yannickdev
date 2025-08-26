@@ -10,6 +10,7 @@ require_once api_get_path(LIBRARY_PATH).'MyStudents.php';
 
 global $htmlHeadXtra;
 $token = Security::get_token();
+$noTeacherMsg = addslashes(get_lang('NoTeacher', 'user_profile'));
 $htmlHeadXtra[] = '<style>
     .user-profile.card {border:1px solid #eee;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,0.05);margin-bottom:20px;}
     .user-profile .card-title {font-weight:bold;text-align:center;background:#f7f7f7;margin:0;padding:10px;}
@@ -48,15 +49,9 @@ $(function(){
         e.preventDefault();
         var $card = $(this).closest(".user-profile");
         var userId = $card.data("user-id");
-        var teacherId = $card.find(".teacher-select").val();
-        if(!teacherId){
-            alert("Veuillez sélectionner un formateur");
-            return;
-        }
         $.post("'.api_get_path(WEB_PLUGIN_PATH).'user_profile/ajax.php", {
             action: "warn",
             user_id: userId,
-            teacher_id: teacherId,
             sec_token: userProfileToken
         }, function(resp){
             if (resp && resp.token) {
@@ -64,6 +59,8 @@ $(function(){
             }
             if (resp && resp.status === \'ok\') {
                 alert("Message envoyé");
+            } else if (resp && resp.status === \'no_teacher\') {
+                alert("'.$noTeacherMsg.'");
             } else {
                 alert("Erreur lors de l\'envoi du message");
             }
@@ -133,9 +130,6 @@ if ($perPage !== 'all') {
     $userSql .= " ORDER BY lastname, firstname";
 }
 $users = Database::query($userSql);
-// Preload teachers for selection list
-$teachersRes = Database::query("SELECT id, firstname, lastname FROM $tblUser WHERE status = ".COURSEMANAGER." ORDER BY lastname, firstname");
-$teachers = Database::store_result($teachersRes);
 
 Display::display_header(get_lang('UserTracking', 'user_profile'));
 
@@ -152,6 +146,7 @@ if ($current === 'tracking_untracked.php') {
 } else {
     $links[] = '<a href="tracking_untracked.php">Suivi administratif</a>';
 }
+$links[] = '<a href="teachers.php">'.get_lang('TeacherAssignment', 'user_profile').'</a>';
 echo '<div class="mb-3">'.implode(' | ', $links).'</div>';
 
 echo '<div class="user-profile-section text-center">';
@@ -227,6 +222,12 @@ while ($user = Database::fetch_array($users)) {
     echo '<li class="list-group-item"><strong>'.get_lang('RegistrationDate').':</strong> '.Security::remove_XSS($registrationDate).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('LastLogins').':</strong> '.$lastLogin.'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('Agenda').':</strong> '.$thisWeekBox.' | '.$nextWeekBox.' <button class="btn btn-warning ml-2 agenda-remind-btn">Relancer</button></li>';
+    $teacherNames = $plugin->getTeacherNamesForUser($userId);
+    if ($teacherNames === '') {
+        $teacherNames = '-';
+    }
+    echo '<li class="list-group-item"><strong>'.get_lang('Teachers').':</strong> '
+        .Security::remove_XSS($teacherNames).'</li>';
     echo '</ul>';
 
     // Time spent last week
@@ -323,20 +324,6 @@ while ($user = Database::fetch_array($users)) {
             echo '</tbody></table></div>';
             echo '</div>';
         }
-    }
-    // Selection list of teachers
-    if (!empty($teachers)) {
-        echo '<div class="mt-3">';
-        echo '<label>'.get_lang('Teacher').'</label>';
-        echo '<select class="form-control teacher-select">';
-        // Default empty option so no teacher is pre-selected
-        echo '<option value=""></option>';
-        foreach ($teachers as $teacher) {
-            $fullName = $teacher['firstname'].' '.$teacher['lastname'];
-            echo '<option value="'.((int) $teacher['id']).'">'.Security::remove_XSS($fullName).'</option>';
-        }
-        echo '</select>';
-        echo '</div>';
     }
     echo '<div class="text-center mt-3">';
     echo '<a class="btn btn-danger" title="Accéder au suivi" href="'.Security::remove_XSS($detailsUrl).'">Suivi</a>';

@@ -31,6 +31,8 @@ foreach ($fields as $field) {
     $fieldsByCat[$field['category_id']][] = $field;
 }
 $categories = $plugin->getCategories();
+$teacherNames = $plugin->getTeacherNamesForUser($userId);
+$teacherDisplay = $teacherNames !== '' ? $teacherNames : '-';
 
 // Build a simple HTML table for Excel without style tags.
 $html  = '<table border="1">';
@@ -42,6 +44,7 @@ $html .= '<tr><td>'.get_lang('OfficialCode').'</td><td>'.Security::remove_XSS($i
 $html .= '<tr><td>'.get_lang('Phone').'</td><td>'.Security::remove_XSS($info['phone']).'</td></tr>';
 $html .= '<tr><td>'.get_lang('RegistrationDate').'</td><td>'.Security::remove_XSS($info['registration_date']).'</td></tr>';
 $html .= '<tr><td>'.get_lang('LastLogins').'</td><td>'.Security::remove_XSS($info['last_login']).'</td></tr>';
+$html .= '<tr><td>'.get_lang('Teachers').'</td><td>'.Security::remove_XSS($teacherDisplay).'</td></tr>';
 
 foreach ($categories as $cat) {
     $html .= '<tr><th colspan="2">'.Security::remove_XSS(UserProfilePlugin::getCategoryLabel($cat)).'</th></tr>';
