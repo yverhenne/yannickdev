@@ -16,6 +16,11 @@ require_once '../work/work.lib.php';
 api_block_anonymous_users();
 $htmlHeadXtra[] = '<script src="'.api_get_path(WEB_PUBLIC_PATH)
     .'assets/jquery.easy-pie-chart/dist/jquery.easypiechart.js"></script>';
+$htmlHeadXtra[] = '<style>
+.course-unsubscribed{background-color:#f5f5f5 !important;}
+.course-unsubscribed td,.course-unsubscribed td a{color:#888 !important;}
+.course-unsubscribed .details-icon{filter:grayscale(100%);opacity:0.5;}
+</style>';
 
 $export = isset($_GET['export']) ? $_GET['export'] : false;
 $sessionId = isset($_GET['id_session']) ? (int) $_GET['id_session'] : 0;
@@ -1773,19 +1778,20 @@ if (empty($details)) {
 
                 $csv_content[] = $csvRow;
                 $exportCourseList[$sId][] = $csvRow;
-
-                echo '<tr>
-                    <td>
-                        <a href="'.$courseInfoItem['course_public_url'].'?id_session='.$sId.'">'.
-                            $courseInfoItem['title'].'
-                        </a>
-                    </td>
-                    <td>'.$time_spent_on_course.'</td>
-                    <td>'.$progress.'</td>
-                    <td>'.$score.'</td>';
+                $rowClass = $isSubscribed ? '' : ' class="course-unsubscribed"';
+                echo '<tr'.$rowClass.'>',
+                    '<td>',
+                        '<a href="'.$courseInfoItem['course_public_url'].'?id_session='.$sId.'">'.
+                            $courseInfoItem['title'].
+                        '</a>',
+                    '</td>',
+                    '<td>'.$time_spent_on_course.'</td>',
+                    '<td>'.$progress.'</td>',
+                    '<td>'.$score.'</td>';
                 if($theoreticalTimeEnabled) {
                     echo '<td>'.$theoreticalTimeDisplay.'</td>';
                 }
+
                 if ($subscriptionColumnEnabled && !empty($sId)) {
                     echo '<td>'.$subscriptionIcon.'</td>';
                 }
@@ -1795,12 +1801,15 @@ if (empty($details)) {
                     echo '<td width="10"><a href="'.api_get_self().'?student='.$student_id
                         .'&details=true&course='.$courseInfoItem['code'].'&id_coach='.$coachId.'&origin='.$origin
                         .'&id_session='.$sId.'#infosStudent">'
-                        .Display::return_icon('2rightarrow.png', get_lang('Details')).'</a></td>';
+                        .Display::return_icon('2rightarrow.png', get_lang('Details'), ['class' => 'details-icon'])
+                        .'</a></td>';
+
                 } else {
                     echo '<td width="10"><a href="'.api_get_self().'?student='.$student_id
                         .'&details=true&course='.$courseInfoItem['code'].'&origin='.$origin.'&id_session='.$sId
                         .'#infosStudent">'
-                        .Display::return_icon('2rightarrow.png', get_lang('Details')).'</a></td>';
+                        .Display::return_icon('2rightarrow.png', get_lang('Details'), ['class' => 'details-icon'])
+                        .'</a></td>';
                 }
                 echo '</tr>';
             }
