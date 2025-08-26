@@ -81,6 +81,8 @@ $built = [
     get_lang('RegistrationDate') => $info['registration_date'],
     get_lang('LastLogins') => $info['last_login'],
 ];
+$teacherNames = UserProfilePlugin::create()->getTeacherNamesForUser($userId);
+$built[get_lang('Teachers')] = $teacherNames !== '' ? $teacherNames : '-';
 echo '<div class="card user-profile mb-3">';
 echo '<div class="card-title"><strong>'.get_lang('PlatformFields', 'user_profile').'</strong></div>';
 echo '<ul class="list-group list-group-flush">';
