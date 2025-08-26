@@ -32,27 +32,50 @@ foreach ($fields as $field) {
     $fieldsByCat[$field['category_id']][] = $field;
 }
 $categories = $plugin->getCategories();
+$teacherNames = $plugin->getTeacherNamesForUser($userId);
+$teacherDisplay = $teacherNames !== '' ? $teacherNames : '-';
 
 ob_start();
 ?>
-<h2><?php echo get_lang('UserProfile'); ?></h2>
-<div class="card user-profile mb-3">
-    <div class="card-title"><strong><?php echo get_lang('PlatformFields', 'user_profile'); ?></strong></div>
-    <ul class="list-group list-group-flush">
-        <li class="list-group-item"><strong><?php echo get_lang('FirstName'); ?>:</strong> <?php echo Security::remove_XSS($info['firstname']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('LastName'); ?>:</strong> <?php echo Security::remove_XSS($info['lastname']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('Email'); ?>:</strong> <?php echo Security::remove_XSS($info['email']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('OfficialCode'); ?>:</strong> <?php echo Security::remove_XSS($info['official_code']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('Phone'); ?>:</strong> <?php echo Security::remove_XSS($info['phone']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('RegistrationDate'); ?>:</strong> <?php echo Security::remove_XSS($info['registration_date']); ?></li>
-        <li class="list-group-item"><strong><?php echo get_lang('LastLogins'); ?>:</strong> <?php echo Security::remove_XSS($info['last_login']); ?></li>
-    </ul>
+<h2 style="text-align:center;font-weight:bold;">FICHE UTILISATEUR</h2>
+<div style="border:1px solid #ccd9e6;margin-bottom:15px;">
+    <div style="background-color:#e6f2ff;text-align:center;font-weight:bold;padding:4px;">
+        <strong><?php echo get_lang('PlatformFields', 'user_profile'); ?></strong>
+    </div>
+    <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse:collapse;">
+        <tr>
+            <td><strong><?php echo get_lang('FirstName'); ?>:</strong> <?php echo Security::remove_XSS($info['firstname']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('LastName'); ?>:</strong> <?php echo Security::remove_XSS($info['lastname']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('Email'); ?>:</strong> <?php echo Security::remove_XSS($info['email']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('OfficialCode'); ?>:</strong> <?php echo Security::remove_XSS($info['official_code']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('Phone'); ?>:</strong> <?php echo Security::remove_XSS($info['phone']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('RegistrationDate'); ?>:</strong> <?php echo Security::remove_XSS($info['registration_date']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('LastLogins'); ?>:</strong> <?php echo Security::remove_XSS($info['last_login']); ?></td>
+        </tr>
+        <tr>
+            <td><strong><?php echo get_lang('Teachers'); ?>:</strong> <?php echo Security::remove_XSS($teacherDisplay); ?></td>
+        </tr>
+    </table>
 </div>
 <?php foreach ($categories as $cat): ?>
-<div class="card user-profile mb-3">
-    <div class="card-title category-title"><strong><?php echo Security::remove_XSS(UserProfilePlugin::getCategoryLabel($cat)); ?></strong></div>
+<div style="border:1px solid #ccd9e6;margin-bottom:15px;">
+    <div style="background-color:#e6f2ff;text-align:center;font-weight:bold;padding:4px;">
+        <strong><?php echo Security::remove_XSS(UserProfilePlugin::getCategoryLabel($cat)); ?></strong>
+    </div>
     <?php if (!empty($fieldsByCat[$cat['id']])): ?>
-    <ul class="list-group list-group-flush">
+    <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse:collapse;">
         <?php foreach ($fieldsByCat[$cat['id']] as $field): ?>
         <?php
         $val = $field['value'];
@@ -60,9 +83,11 @@ ob_start();
             $val = api_format_date($val, DATE_FORMAT_LONG);
         }
         ?>
-        <li class="list-group-item"><strong><?php echo Security::remove_XSS($field['name']); ?>:</strong> <?php echo Security::remove_XSS($val); ?></li>
+        <tr>
+            <td><strong><?php echo Security::remove_XSS($field['name']); ?>:</strong> <?php echo Security::remove_XSS($val); ?></td>
+        </tr>
         <?php endforeach; ?>
-    </ul>
+     </table>
     <?php endif; ?>
 </div>
 <?php endforeach; ?>
@@ -75,7 +100,9 @@ $header = '<div style="text-align:right;"><img src="'.$logo.'" height="50"></div
 $date = api_format_date(api_get_local_time(), DATE_TIME_FORMAT_LONG);
 $footer = '<table width="100%"><tr><td>'.$date.'</td><td style="text-align:right">{PAGENO}/{nb}</td></tr></table>';
 
-$pdf = new PDF();
-$pdf->set_custom_header($header);
-$pdf->set_custom_footer($footer);
-$pdf->content_to_pdf($html, '', 'user_profile_'.$info['username']);
+$tpl = new Template('', false, false, false, false, true, false);
+$tpl->assign('pdf_header', $header);
+$tpl->assign('pdf_footer', $footer);
+$pdf = new PDF('A4', 'P', [], $tpl);
+$pdf->params['filename'] = 'user_profile_'.$info['username'];
+$pdf->html_to_pdf_with_template($html, false, false, true);

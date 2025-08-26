@@ -23,4 +23,9 @@ $strings['CurrentCategories'] = 'Catégories actuelles';
 $strings['PlatformFields'] = 'UTILISATEUR';
 $strings['SearchUser'] = 'Rechercher';
 $strings['SearchResults'] = 'Résultat de la recherche';
+$strings['TeacherManagement'] = 'Gestion des enseignants';
+$strings['TeacherAssignment'] = 'Affectation des enseignants';
+$strings['NoTeacher'] = 'Pas d\'enseignant';
+$strings['UpdateSuccess'] = 'Mise à jour réussie';
+$strings['UpdateError'] = 'Échec de la mise à jour';
 ?>

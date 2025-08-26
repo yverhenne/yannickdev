@@ -35,11 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'warn':
-                $userId    = (int) ($_POST['user_id'] ?? 0);
-                $teacherId = (int) ($_POST['teacher_id'] ?? 0);
-                $tracking  = isset($_POST['tracking']) && (int) $_POST['tracking'] === 0 ? 0 : 1;
+                $userId   = (int) ($_POST['user_id'] ?? 0);
+                $tracking = isset($_POST['tracking']) && (int) $_POST['tracking'] === 0 ? 0 : 1;
 
-                if ($userId && $teacherId) {
+                if ($userId) {
+                    $plugin = UserProfilePlugin::create();
+                    $teacherIds = $plugin->getUserTeachers($userId);
+                    if (empty($teacherIds)) {
+                        $status = 'no_teacher';
+                        break;
+                    }
+
                     $tblUser = Database::get_main_table(TABLE_MAIN_USER);
                     $userInfo = Database::fetch_array(
                         Database::query("SELECT firstname, lastname FROM $tblUser WHERE id = $userId"),
@@ -61,9 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $res = Database::query($sql);
 
                     $lines = [];
+                    $now = time();
                     while ($row = Database::fetch_array($res, 'ASSOC')) {
                         $value = $row['value'];
-                        if ($row['field_type'] === 'date' && !empty($value)) {
+                        if ($row['field_type'] === 'date') {
+                            if (empty($value) || strtotime($value) >= $now) {
+                                continue;
+                            }
                             $value = api_format_date($value, DATE_FORMAT_LONG);
                         }
                         $lines[] = '- '.$row['name'].' : '.$value;
@@ -78,8 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $content = $intro.'<br><br>'.$userLine.'<br><br>'.$body.'<br><br>'.$outro;
                     $subject = 'Avertissement pour '.$userName;
 
-                    $sent = MessageManager::send_message_simple($teacherId, $subject, $content, api_get_user_id());
-                    $status = $sent ? 'ok' : 'error';
+                    $allSent = true;
+                    foreach ($teacherIds as $teacherId) {
+                        $sent = MessageManager::send_message_simple($teacherId, $subject, $content, api_get_user_id());
+                        $allSent = $allSent && $sent;
+                    }
+                    $status = $allSent ? 'ok' : 'error';
                 }
                 break;
 
@@ -95,6 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         api_get_user_id()
                     );
                     $status = $sent ? 'ok' : 'error';
+                }
+                break;
+
+            case 'save_teachers':
+                $userId = (int) ($_POST['user_id'] ?? 0);
+                $teacherIds = $_POST['teachers'] ?? [];
+                if ($userId) {
+                    $plugin = UserProfilePlugin::create();
+                    $plugin->saveUserTeachers($userId, is_array($teacherIds) ? $teacherIds : []);
+                    $status = 'ok';
                 }
                 break;
 

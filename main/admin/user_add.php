@@ -332,6 +332,10 @@ $profilePluginEnabled = api_get_configuration_value('plugin_user_profile_enabled
 $pluginInstalled = AppPlugin::getInstance()->isInstalled('user_profile');
 if ($profilePluginEnabled && $pluginInstalled) {
     $profilePlugin->addFieldsToForm($form);
+    $teacherOptions = $profilePlugin->getTeacherOptions();
+    if (!empty($teacherOptions)) {
+        $form->addSelect('teachers', get_lang('Teachers'), $teacherOptions, ['multiple' => 'multiple']);
+    }
 }
 
 $allowEmailTemplate = api_get_configuration_value('mail_template_system');
@@ -498,6 +502,7 @@ if ($form->validate()) {
             $extraFieldValues->saveFieldValues($user);
             if ($profilePluginEnabled && $pluginInstalled) {
                 $profilePlugin->saveUserValues($user_id, $user);
+                $profilePlugin->saveUserTeachers($user_id, $user['teachers'] ?? []);
             }
             $message = get_lang('UserAdded').': '.
                 Display::url(

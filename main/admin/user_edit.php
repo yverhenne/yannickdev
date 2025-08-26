@@ -394,6 +394,10 @@ $returnParams = $extraField->addElements(
 );
 if ($profilePluginEnabled && $pluginInstalled) {
     $profilePlugin->addFieldsToForm($form, $user_data['user_id']);
+    $teacherOptions = $profilePlugin->getTeacherOptions();
+    if (!empty($teacherOptions)) {
+        $form->addSelect('teachers', get_lang('Teachers'), $teacherOptions, ['multiple' => 'multiple']);
+    }
 }
 $jqueryReadyContent = $returnParams['jquery_ready_content'];
 
@@ -439,6 +443,12 @@ if (empty($expiration_date)) {
     $user_data['expiration_date'] = api_get_local_time($expiration_date);
 }
 $form->setDefaults($user_data);
+if ($profilePluginEnabled && $pluginInstalled) {
+    $selectedTeachers = $profilePlugin->getUserTeachers($user_id);
+    if (!empty($selectedTeachers)) {
+        $form->setDefaults(['teachers' => $selectedTeachers]);
+    }
+}
 
 $error_drh = false;
 // Validate form
@@ -571,6 +581,7 @@ if ($form->validate()) {
     $extraFieldValue->saveFieldValues($user);
     if ($profilePluginEnabled && $pluginInstalled) {
         $profilePlugin->saveUserValues($user_id, $user);
+        $profilePlugin->saveUserTeachers($user_id, $user['teachers'] ?? []);
     }
     $userInfo = api_get_user_info($user_id);
     $message = get_lang('UserUpdated').': '.Display::url(

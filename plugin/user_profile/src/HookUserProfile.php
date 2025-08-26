@@ -53,6 +53,10 @@ class HookUserProfile extends HookObserver implements HookCreateUserObserverInte
                 'url' => UserProfilePlugin::create()->getTrackingUrl(),
                 'label' => get_plugin_lang('UserTracking', 'user_profile'),
             ];
+            $data['blocks']['user']['items'][] = [
+                'url' => UserProfilePlugin::create()->getTeacherManagementUrl(),
+                'label' => get_lang('TeacherManagement', 'user_profile'),
+            ];
             return $data;
         }
 

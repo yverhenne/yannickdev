@@ -15,4 +15,9 @@ $strings['CurrentCategories'] = 'Current categories';
 $strings['PlatformFields'] = 'USER';
 $strings['SearchUser'] = 'Search user (name or surname)';
 $strings['SearchResults'] = 'Search results';
+$strings['TeacherManagement'] = 'Teacher management';
+$strings['TeacherAssignment'] = 'Teacher assignment';
+$strings['NoTeacher'] = 'No teacher';
+$strings['UpdateSuccess'] = 'Update successful';
+$strings['UpdateError'] = 'Update failed';
 ?>

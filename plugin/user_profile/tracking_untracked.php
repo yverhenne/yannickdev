@@ -120,6 +120,7 @@ if ($current === 'tracking_untracked.php') {
 } else {
     $links[] = '<a href="tracking_untracked.php">Suivi administratif</a>';
 }
+$links[] = '<a href="teachers.php">'.get_lang('TeacherAssignment', 'user_profile').'</a>';
 echo '<div class="mb-3">'.implode(' | ', $links).'</div>';
 
 echo '<div class="user-profile-section text-center">';
@@ -192,6 +193,12 @@ while ($user = Database::fetch_array($users)) {
 
     echo '<li class="list-group-item"><strong>'.get_lang('RegistrationDate').':</strong> '.Security::remove_XSS($registrationDate).'</li>';
     echo '<li class="list-group-item"><strong>'.get_lang('LastLogins').':</strong> '.$lastLogin.'</li>';
+    $teacherNames = $plugin->getTeacherNamesForUser($userId);
+    if ($teacherNames === '') {
+        $teacherNames = '-';
+    }
+    echo '<li class="list-group-item"><strong>'.get_lang('Teachers').':</strong> '
+        .Security::remove_XSS($teacherNames).'</li>';
     echo '</ul>';
 
     // Time spent last week
